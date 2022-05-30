@@ -77,14 +77,42 @@ export async function inserirAluguel(req, res) {
 }
 
 export async function finalizarAluguel(req, res) {
+    const {id} = req.params;
 
+    const checarAluguel = await connection.query('select * from rentals where id = $1',[Number(id)])
+    const checarDevolucao = await connection.query('select * from rentals where id = $1 and "returnDate" is null',[Number(id)])
+
+    if(!checarAluguel.rows[0]) return res.status(404).send('Este aluguel não existe')
+    if(!checarDevolucao.rows[0]) return res.status(400).send('Este aluguel já foi devolvido')
+
+    const returnDate = dayjs().format("YYYY-MM-DD");
+    let delayFee=0;
+    
+    let day1 = new Date(returnDate.replace('-','/'))
+    let day2 = new Date(checarAluguel.rows[0].rentDate.toISOString().slice(0, 10).replace('-','/'))
+    
+    const timeDiff = Math.abs(day1 - day2);
+    
+    if(timeDiff>0) {
+        delayFee = Math.ceil(timeDiff / (1000 * 3600 * 24)) * checarAluguel.rows[0].originalPrice/checarAluguel.rows[0].daysRented;
+
+        await connection.query('update rentals set "returnDate" = $1,"delayFee" = $2 where id = $3',
+        [returnDate, Number(delayFee), Number(id)])
+
+        res.sendStatus(200)
+    }
+
+    await connection.query('update rentals set "returnDate" = $1,"delayFee" = $2 where id = $3',
+    [returnDate, Number(delayFee), Number(id)])
+
+    res.sendStatus(200)
 }
 
 export async function removerAluguel(req, res) {
     const {id} = req.params;
-    
+
     const checarAluguel = await connection.query('select * from rentals where id = $1',[Number(id)])
-    const checarDevolucao = await connection.query('select * from rentals where id = $1 and "returnDate" = null',[Number(id)])
+    const checarDevolucao = await connection.query('select * from rentals where id = $1 and "returnDate" is null',[Number(id)])
 
     if(!checarAluguel.rows[0]) return res.status(404).send('Este aluguel não existe')
     if(!checarDevolucao.rows[0]) return res.status(400).send('Este aluguel já foi devolvido')
