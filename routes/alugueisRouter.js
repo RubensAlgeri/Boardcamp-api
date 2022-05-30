@@ -1,12 +1,11 @@
 import { Router } from 'express';
-import { atualizarAluguel, buscarAlugueis, inserirAluguel} from '../controllers/alugueisController.js';
-import { validaAluguel } from '../middlewares/customerSchemaMiddleware.js';
-import { validaAtualizarAluguel } from '../middlewares/updateCustomerSchemaMiddleware.js';
+import { buscarAlugueis, inserirAluguel, removerAluguel} from '../controllers/alugueisController.js';
+import { validaAluguel } from '../middlewares/rentalSchemaMiddleware.js';
 
 const rentalsRouter = Router();
 rentalsRouter.get("/rentals", buscarAlugueis);
 rentalsRouter.get("/rentals/:id", buscarAlugueis);
-rentalsRouter.post("/rentals", validaAluguel, inserirAluguel);
-rentalsRouter.delete("/rentals/:id", validaAtualizarAluguel, atualizarAluguel);
+rentalsRouter.post("/rentals", inserirAluguel);
+rentalsRouter.delete("/rentals/:id", removerAluguel);
 
 export default rentalsRouter;
