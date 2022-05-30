@@ -81,5 +81,14 @@ export async function finalizarAluguel(req, res) {
 }
 
 export async function removerAluguel(req, res) {
+    const {id} = req.params;
+    
+    const checarAluguel = await connection.query('select * from rentals where id = $1',[Number(id)])
+    const checarDevolucao = await connection.query('select * from rentals where id = $1 and "returnDate" = null',[Number(id)])
 
+    if(!checarAluguel.rows[0]) return res.status(404).send('Este aluguel não existe')
+    if(!checarDevolucao.rows[0]) return res.status(400).send('Este aluguel já foi devolvido')
+
+    await connection.query('delete from rentals where id = $1',[Number(id)])
+    res.sendStatus(200)
 }
